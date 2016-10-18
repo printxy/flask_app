@@ -223,6 +223,11 @@ class User(UserMixin, db.Model):
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
+    @property
+    def followed_posts(self):
+        return Post.query.join(Follow,Follow.followed_id == Post.author_id)\
+            .filter(Follow.follower_id == self.id)
+
     def __repr__(self):
         return '<User %r>' % self.username
 
@@ -252,7 +257,7 @@ class Post(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     @staticmethod
-    def generate_fake(count=100): 
+    def generate_fake(count=100):
         from random import seed, randint
         import forgery_py
 
@@ -265,7 +270,7 @@ class Post(db.Model):
                      author=u)
             db.session.add(p)
             db.session.commit()
-    
+
     @staticmethod
     def on_changed_body(target, value, oldvalue, initiator):
         allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
